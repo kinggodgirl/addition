@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>정수 덧셈 연습 (–10~+10)</title>
   <style>
     body {
@@ -31,7 +32,10 @@
   <button id="newBtn">새 문제</button>
   <button id="checkBtn">정답 확인</button>
 
-  <svg id="svg" width="1100" height="120">
+  <svg id="svg"
+     viewBox="0 0 1100 120"
+     style="width:100%; height:auto; touch-action:none">
+
     <!-- 축 -->
     <line x1="50" y1="60" x2="1050" y2="60" stroke="black" stroke-width="3"/>
 
@@ -148,16 +152,20 @@
     }
 
     // 마우스 이벤트
-    svg.addEventListener("mousedown", e=>{
-      if (e.target===aHead) dragging="a";
-      if (e.target===bHead) dragging="b";
-    });
-    svg.addEventListener("mousemove", e=>{
-      if (!dragging) return;
-      // 브라우저→SVG 좌표
-      const pt = svg.createSVGPoint();
-      pt.x=e.clientX; pt.y=e.clientY;
-      const cur = pt.matrixTransform(svg.getScreenCTM().inverse());
+      svg.addEventListener("pointerdown", e => {
+        if (e.pointerType !== "mouse" && e.pointerType !== "touch") return;
+        if (e.target === aHead || e.target === aBody) dragging = "a";
+        if (e.target === bHead)                 dragging = "b";
+        // 포인터 캡쳐 시작
+        svg.setPointerCapture(e.pointerId);
+      });
+
+      svg.addEventListener("pointermove", e => {
+        if (!dragging) return;
+        const pt = svg.createSVGPoint();
+        pt.x = e.clientX; pt.y = e.clientY;
+        const cur = pt.matrixTransform(svg.getScreenCTM().inverse());
+
 
       // 1) 첫 번째 화살표 드래그
       if (dragging==="a") {
@@ -205,8 +213,22 @@
         updateColor(bBody,bHead, startX, newX2);
       }
     });
-    svg.addEventListener("mouseup",   ()=>dragging=null);
-    svg.addEventListener("mouseleave",()=>dragging=null);
+      svg.addEventListener("pointerup", e => {
+        dragging = null;
+        svg.releasePointerCapture(e.pointerId);
+      });
+
+          // 포인터가 SVG를 떠날 때(터치 해제 등)
+      svg.addEventListener("pointerleave", e => {
+        dragging = null;
+        svg.releasePointerCapture(e.pointerId);
+      });
+
+      // 터치/펜이 뭔가 문제로 캡처가 취소됐을 때
+      svg.addEventListener("pointercancel", () => {
+        dragging = null;
+      });
+
 
     // 정답 확인
     checkBtn.addEventListener("click", ()=>{
