@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>정수 덧셈 연습 (–10~+10)</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    #problem {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+    }
+    svg {
+      border-top: 2px solid #ccc;
+      user-select: none;
+      margin-bottom: 10px;
+    }
+    text { font-size: 14px; fill: #333; }
+    button {
+      padding: 6px 12px;
+      font-size: 1em;
+      margin: 0 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="problem">문제: </div>
+  <button id="newBtn">새 문제</button>
+  <button id="checkBtn">정답 확인</button>
+
+  <svg id="svg" width="1100" height="120">
+    <!-- 축 -->
+    <line x1="50" y1="60" x2="1050" y2="60" stroke="black" stroke-width="3"/>
+
+    <!-- 눈금 -->
+  <g id="ticks" stroke="black" stroke-width="1"></g>
+    <!-- 레이블 -->
+  <g id="labels"></g>
+
+    <!-- 화살표1 -->
+    <line id="arrow1Body" x1="550" y1="20" x2="550" y2="20"
+          stroke="red" stroke-width="8" cursor="pointer" />
+    <polygon id="arrow1Head"
+             points="550,20 540,12 540,28"
+             fill="red" cursor="pointer" />
+
+    <!-- 화살표2 -->
+    <line id="arrow2Body" x1="550" y1="40" x2="550" y2="40"
+          stroke="red" stroke-width="8" cursor="pointer" />
+    <polygon id="arrow2Head"
+             points="550,40 540,32 540,48"
+             fill="red" cursor="pointer" />
+  </svg>
+
+  <script>
+    // ① svg, ticks, labels DOM 레퍼런스 미리 가져오기
+    const svg    = document.getElementById("svg");
+    const ticks  = document.getElementById("ticks");
+    const labels = document.getElementById("labels");
+
+    // ② 도메인·스냅 포인트 계산
+    const domainMin = -10, domainMax = 10;
+    const step   = 50, margin = 50;
+    const snapPoints = [];
+    for (let v = domainMin; v <= domainMax; v++) {
+      const x = margin + (v - domainMin) * step;
+      snapPoints.push(x);
+
+    // ③ 눈금선(line) 동적 추가
+      const ln = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      ln.setAttribute("x1", x);
+      ln.setAttribute("y1", 50);
+      ln.setAttribute("x2", x);
+      ln.setAttribute("y2", 70);
+      ln.setAttribute("stroke", "black");
+      ln.setAttribute("stroke-width", "1");
+      ticks.appendChild(ln);
+
+      // ④ 숫자 레이블(text) 동적 추가
+      const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      txt.setAttribute("x", x -5);
+      txt.setAttribute("y", 90);
+      txt.textContent = v;
+      labels.appendChild(txt);
+  }
+    // 요소 참조
+    const probDiv = document.getElementById("problem");
+    const newBtn  = document.getElementById("newBtn");
+    const checkBtn= document.getElementById("checkBtn");
+    const zeroX = snapPoints[-domainMin];
+
+    const aBody = document.getElementById("arrow1Body");
+    const aHead = document.getElementById("arrow1Head");
+    const bBody = document.getElementById("arrow2Body");
+    const bHead = document.getElementById("arrow2Head");
+
+    let dragging = null;  // "a" or "b"
+    let aVal, bVal;       // 현재 문제의 값
+
+    // 가장 가까운 스냅 찾기
+    function getSnap(x) {
+      return snapPoints.reduce((p,c)=>
+        Math.abs(c-x)<Math.abs(p-x)?c:p
+      );
+    }
+    // 색 업데이트
+    function updateColor(body, head, x1, x2) {
+      const color = x2 < x1 ? "#007bff" : "red";
+      body.setAttribute("stroke", color);
+      head.setAttribute("fill", color);
+    }
+
+    // 새 문제 생성: aVal,bVal ∈ [domainMin,domainMax]\{0}, 합도 [domainMin,domainMax]
+    function newProblem() {
+      do {
+        aVal = Math.floor(Math.random()*(domainMax-domainMin+1)) + domainMin;
+      } while(aVal===0);
+      do {
+        bVal = Math.floor(Math.random()*(domainMax-domainMin+1)) + domainMin;
+      } while(bVal===0 || aVal + bVal < domainMin || aVal + bVal > domainMax);
+
+      probDiv.textContent =
+        `문제: (${aVal>=0? "+"+aVal : aVal}) + `+
+        `(${bVal>=0? "+"+bVal : bVal}) = ?`;
+
+      // 두 화살표 모두 0 위치(길이 0)으로 초기화
+      [aBody,aHead].forEach(_=>{
+        aBody.setAttribute("x1", zeroX);
+        aBody.setAttribute("x2", zeroX);
+        aHead.setAttribute(
+          "points",
+          `${zeroX},20 ${zeroX-10},12 ${zeroX-10},28`
+        );
+        updateColor(aBody,aHead, zeroX, zeroX);
+      });
+      [bBody,bHead].forEach(_=>{
+        bBody.setAttribute("x1", zeroX);
+        bBody.setAttribute("x2", zeroX);
+        bHead.setAttribute(
+          "points",
+          `${zeroX},40 ${zeroX-10},32 ${zeroX-10},48`
+        );
+        updateColor(bBody,bHead, zeroX, zeroX);
+      });
+    }
+
+    // 마우스 이벤트
+    svg.addEventListener("mousedown", e=>{
+      if (e.target===aHead) dragging="a";
+      if (e.target===bHead) dragging="b";
+    });
+    svg.addEventListener("mousemove", e=>{
+      if (!dragging) return;
+      // 브라우저→SVG 좌표
+      const pt = svg.createSVGPoint();
+      pt.x=e.clientX; pt.y=e.clientY;
+      const cur = pt.matrixTransform(svg.getScreenCTM().inverse());
+
+      // 1) 첫 번째 화살표 드래그
+      if (dragging==="a") {
+        const newX2 = getSnap(cur.x);
+        // 몸통, 머리, 색 업데이트
+        aBody.setAttribute("x2", newX2);
+        if (newX2 < zeroX) {
+          aHead.setAttribute("points",
+            `${newX2-10},20 ${newX2+5},12 ${newX2+5},28`
+          );
+        } else {
+          aHead.setAttribute("points",
+            `${newX2+10},20 ${newX2-5},12 ${newX2-5},28`
+          );
+        }
+        updateColor(aBody,aHead, zeroX, newX2);
+
+        // ▶ 두 번째 화살표 “통째로” 따라오기 (길이 0)
+        bBody.setAttribute("x1", newX2);
+        bBody.setAttribute("x2", newX2);
+        bHead.setAttribute("points",
+          `${newX2+10},40 ${newX2-5},32 ${newX2-5},48`
+        );
+        updateColor(bBody,bHead, newX2, newX2);
+      }
+
+      // 2) 두 번째 화살표 드래그
+      if (dragging==="b") {
+        const startX = parseFloat(aBody.getAttribute("x2"));
+        let newX2 = getSnap(cur.x);
+        // 경계 보정
+        newX2 = Math.max(margin, Math.min(margin+(domainMax-domainMin)*step, newX2));
+
+        bBody.setAttribute("x1", startX);
+        bBody.setAttribute("x2", newX2);
+        if (newX2 < startX) {
+          bHead.setAttribute("points",
+            `${newX2-10},40 ${newX2+5},32 ${newX2+5},48`
+          );
+        } else {
+          bHead.setAttribute("points",
+            `${newX2+10},40 ${newX2-5},32 ${newX2-5},48`
+          );
+        }
+        updateColor(bBody,bHead, startX, newX2);
+      }
+    });
+    svg.addEventListener("mouseup",   ()=>dragging=null);
+    svg.addEventListener("mouseleave",()=>dragging=null);
+
+    // 정답 확인
+    checkBtn.addEventListener("click", ()=>{
+      const aUser = Math.round(
+        (parseFloat(aBody.getAttribute("x2")) - zeroX)/step
+      );
+      const bUser = Math.round(
+        (parseFloat(bBody.getAttribute("x2")) - parseFloat(bBody.getAttribute("x1")))/step
+      );
+      if (aUser===aVal && bUser===bVal) {
+        alert("🎉 정답입니다!");
+      } else {
+        alert(`❌ 틀렸습니다.\n문제: ${aVal}+${bVal}\n입력: ${aUser}+${bUser}`);
+      }
+    });
+
+    // 초기화
+    newBtn.addEventListener("click", newProblem);
+    newProblem();
+  </script>
+</body>
+</html>
