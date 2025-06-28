@@ -1,55 +1,63 @@
 body {
   font-family: sans-serif;
   text-align: center;
-  margin: 40px;
+  padding: 20px;
+}
+#problem {
+  font-size: 1.2em;
+  margin-bottom: 10px;
+}
+svg {
+  border-top: 2px solid #ccc;
+  user-select: none;
+  margin-bottom: 10px;
+}
+text { font-size: 14px; fill: #333; }
+
+button {
+    padding: 10px 20px;
+    margin: 10px;
+    font-size: 16px;
+    background-color: #4ade80;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+#button-group {
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+button:hover {
+    background-color: #22c55e;
+}
+button:active {
+    transform: scale(0.95)
 }
 
-.number-line {
-  position: relative;
-  width: 600px;
-  height: 80px;
-  margin: 40px auto;
-  border-top: 4px solid #333;
+line {
+  stroke-linecap: round;
 }
 
-.tick {
-  position: absolute;
-  top: -10px;
-  width: 1px;
-  height: 20px;
-  background: #333;
+#ticks line {
+  stroke: #666;
+  stroke-width: 2;
 }
 
-.tick span {
-  position: absolute;
-  top: 25px;
-  left: -10px;
-  width: 30px;
-  text-align: center;
-  font-size: 14px;
+#labels text {
+  font-weight: 600;
+  fill: #444;
 }
-
-.arrow {
-  position: absolute;
-  top: -25px;
-  height: 2px;
-  background: red;
-  width: 40%; /* 길이 조정 */
-}
-
-.arrow {
-  position: absolute;
-  top: -25px;
-  height: 2px;
-  background: red;
-  width: 40%;
-}
-
-.arrow::after {
-  content: '→';
-  position: absolute;
-  right: -18px;
-  top: -10px;
-  font-size: 24px;
-  color: red;
+@media (max-width: 500px) {
+  #problem {
+    font-size: 1em;
+  }
+  button {
+    font-size: 14px;
+    padding: 8px 16px;
+  }
+  text {
+    font-size: 12px;
+  }
 }

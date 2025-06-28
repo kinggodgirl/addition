@@ -3,35 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css" />
   <title>정수 덧셈 연습 (–10~+10)</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      padding: 20px;
-    }
-    #problem {
-      font-size: 1.2em;
-      margin-bottom: 10px;
-    }
-    svg {
-      border-top: 2px solid #ccc;
-      user-select: none;
-      margin-bottom: 10px;
-    }
-    text { font-size: 14px; fill: #333; }
-    button {
-      padding: 6px 12px;
-      font-size: 1em;
-      margin: 0 5px;
-    }
-  </style>
 </head>
 <body>
   <div id="problem">문제: </div>
-  <button id="newBtn">새 문제</button>
-  <button id="checkBtn">정답 확인</button>
-
+  <div id="button-group">
+    <button id="newBtn">새 문제</button>
+    <button id="checkBtn">정답 확인</button>
+  </div>
   <svg id="svg"
      viewBox="0 0 1100 120"
      style="width:100%; height:auto; touch-action:none">
@@ -58,6 +38,7 @@
              points="550,40 540,32 540,48"
              fill="red" cursor="pointer" />
   </svg>
+<div id="message" style="height: 24px; font-weight: bold; margin-top: 10px;"></div>
 
   <script>
     // ① svg, ticks, labels DOM 레퍼런스 미리 가져오기
@@ -149,6 +130,9 @@
         );
         updateColor(bBody,bHead, zeroX, zeroX);
       });
+      const message = document.getElementById("message");
+      message.textContent = "";  // 메시지 초기화 (빈 문자열로)
+      message.className = "";    // 클래스도 초기화
     }
 
     // 마우스 이벤트
@@ -232,6 +216,7 @@
 
     // 정답 확인
     checkBtn.addEventListener("click", ()=>{
+      const message = document.getElementById("message");
       const aUser = Math.round(
         (parseFloat(aBody.getAttribute("x2")) - zeroX)/step
       );
@@ -239,15 +224,38 @@
         (parseFloat(bBody.getAttribute("x2")) - parseFloat(bBody.getAttribute("x1")))/step
       );
       if (aUser===aVal && bUser===bVal) {
-        alert("🎉 정답입니다!");
+        message.textContent = "🎉 정답입니다!";
+        message.className = "correct";
       } else {
-        alert(`❌ 틀렸습니다.\n문제: ${aVal}+${bVal}\n입력: ${aUser}+${bUser}`);
+        message.textContent = `❌ 틀렸습니다.\n문제: ${aVal}+${bVal}\n입력: ${aUser}+${bUser}`;
+        message.className = "wrong";ans
       }
     });
 
     // 초기화
     newBtn.addEventListener("click", newProblem);
     newProblem();
+
+    let score = 0;
+    let level = 1;
+
+    function checkAnswer(userAnswer, correctAnswer) {
+      if (userAnswer === correctAnswer) {
+        score += 10;
+        if (score >= level * 50) {
+          level++;
+          alert(`축하합니다! 레벨업! 현재 레벨: ${level}`);
+        }
+      } else {
+        score -= 5;
+      }
+      updateUI();
+    }
+
+    function updateUI() {
+      document.getElementById('score').textContent = `점수: ${score}`;
+      document.getElementById('level').textContent = `레벨: ${level}`;
+    }
   </script>
 </body>
 </html>
